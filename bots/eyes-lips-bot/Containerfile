@@ -25,10 +25,9 @@ USER node
 # 作業ディレクトリ
 WORKDIR /app
 
-# 依存関係をコピー
+# 依存関係をコピー（workspacesはnode_modulesにホイストされる）
 COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules
 COPY --from=dependencies --chown=node:node /app/packages ./packages
-COPY --from=dependencies --chown=node:node /app/bots/eyes-lips-bot/node_modules ./bots/eyes-lips-bot/node_modules
 
 # ソースコードをコピー
 COPY --chown=node:node package*.json ./
