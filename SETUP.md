@@ -91,6 +91,55 @@ cp .env.example .env
 
 ### 2. ビルドと起動
 
+#### 方法A: 全てのボットを一括管理（推奨）
+
+**ルートディレクトリから全ボットを起動:**
+
+```bash
+# リポジトリルートで実行
+cd /path/to/discord-bots
+
+# Podman の場合
+podman-compose up -d --build
+
+# Docker の場合
+docker-compose up -d --build
+```
+
+**特定のボットのみ起動:**
+
+```bash
+# eyes-lips-bot のみ起動
+podman-compose up -d eyes-lips-bot
+
+# 複数のボットを起動（将来的に）
+podman-compose up -d eyes-lips-bot music-bot
+```
+
+**ログの確認:**
+
+```bash
+# 全てのボットのログを表示
+podman-compose logs -f
+
+# 特定のボットのログを表示
+podman-compose logs -f eyes-lips-bot
+```
+
+**停止:**
+
+```bash
+# 全てのボットを停止
+podman-compose down
+
+# 特定のボットのみ停止
+podman-compose stop eyes-lips-bot
+```
+
+---
+
+#### 方法B: 個別のボットを起動
+
 **Podman Compose を使用:**
 
 ```bash
@@ -107,31 +156,12 @@ cd bots/eyes-lips-bot
 docker-compose up -d --build
 ```
 
-**注意:** Monorepo構成のため、ビルドコンテキストはリポジトリルート全体です（docker-compose.yml の `context: ../../` 参照）。
+**注意:** 個別起動の場合、ビルドコンテキストは `context: ../../` でリポジトリルート全体を指します。
 
-### 3. ログの確認
+### 3. 動作確認
 
-**Podman:**
-```bash
-podman logs -f eyes-lips-bot
-```
-
-**Docker:**
-```bash
-docker logs -f eyes-lips-bot
-```
-
-### 4. 停止と削除
-
-**Podman:**
-```bash
-podman-compose down
-```
-
-**Docker:**
-```bash
-docker-compose down
-```
+ボットが正常に起動したら、Discord でテスト:
+- eyes-lips-bot: `:eyes:` メッセージを送信 → `👄` または `🫦` でリアクション
 
 ---
 
