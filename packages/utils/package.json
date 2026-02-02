@@ -13,7 +13,7 @@
   "engines": {
     "node": ">=24.0.0"
   },
-  "peerDependencies": {
+  "dependencies": {
     "discord.js": "^14.16.0"
   }
 }

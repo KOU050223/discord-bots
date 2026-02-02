@@ -21,6 +21,6 @@
   "dependencies": {
     "@discord-bots/shared": "*",
     "@discord-bots/utils": "*",
-    "discord.js": "^14.16.0"
+    "discord.js": "^14.25.1"
   }
 }
