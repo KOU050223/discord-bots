@@ -188,6 +188,7 @@ shutdownManager.register();
 ## ドキュメント
 
 - **[SETUP.md](./SETUP.md)** - 環境構築、起動手順、トラブルシューティング
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - 開発フロー、修正、テスト、デプロイ手順
 - **[docker-commands.md](./docker-commands.md)** - Podman/Dockerコマンド集
 
 ---

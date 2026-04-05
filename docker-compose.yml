@@ -22,6 +22,26 @@ services:
     networks:
       - discord-bots
 
+  # Kawaii Bot - :kawaii: リアクションでメッセージ転送
+  kawaii-bot:
+    build:
+      context: .
+      dockerfile: bots/kawaii-bot/Containerfile
+      target: production
+    container_name: kawaii-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - bots/kawaii-bot/.env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - discord-bots
+
   # 将来的に追加するボットはここに記述
   # music-bot:
   #   build:

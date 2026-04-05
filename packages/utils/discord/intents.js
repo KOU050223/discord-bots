@@ -23,6 +23,14 @@ export const IntentPresets = {
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent
+  ],
+
+  // リアクション監視Bot用
+  REACTION_MONITOR: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions
   ]
 };
 
