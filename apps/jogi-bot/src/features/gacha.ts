@@ -22,8 +22,11 @@ async function fetchGacha(url: string, logger: Logger): Promise<string | null> {
       signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) throw new Error(`status ${res.status}`);
-    const { result } = await res.json() as { result: string };
-    return result;
+    const data = await res.json();
+    if (!data || typeof data.result !== 'string') {
+      throw new Error('Invalid response format');
+    }
+    return data.result;
   } catch (err) {
     logger.warn('text-gachaサービス呼び出し失敗:', err);
     return null;

@@ -14,7 +14,6 @@ COPY packages ./packages
 COPY apps/jogi-bot/package*.json ./apps/jogi-bot/
 RUN npm ci --workspaces
 COPY tsconfig.base.json ./
-COPY packages ./packages
 COPY apps/jogi-bot ./apps/jogi-bot
 RUN npm run build --workspace=packages/shared && \
     npm run build --workspace=packages/discord-api && \

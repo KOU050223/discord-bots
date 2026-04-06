@@ -39,7 +39,11 @@ export function setupKawaii(client: Client, logger: Logger): void {
       }
 
       const guildChannel = forwardChannel as GuildTextBasedChannel;
-      const permissions = guildChannel.permissionsFor(client.user!);
+      if (!client.user) {
+        logger.error('client.user が null です（ready前に呼ばれた可能性）');
+        return;
+      }
+      const permissions = guildChannel.permissionsFor(client.user);
       if (!permissions?.has(['SendMessages', 'EmbedLinks'])) {
         logger.error('転送先チャンネルへの送信権限がありません');
         return;
