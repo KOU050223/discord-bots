@@ -4,20 +4,20 @@ WORKDIR /app
 FROM base AS dependencies
 COPY package*.json ./
 COPY packages ./packages
-COPY apps/jogi-bot/package*.json ./apps/jogi-bot/
+COPY apps/toy-bear-bot/package*.json ./apps/toy-bear-bot/
 RUN npm ci --workspaces --only=production && \
     npm cache clean --force
 
 FROM base AS build
 COPY package*.json ./
 COPY packages ./packages
-COPY apps/jogi-bot/package*.json ./apps/jogi-bot/
+COPY apps/toy-bear-bot/package*.json ./apps/toy-bear-bot/
 RUN npm ci --workspaces
 COPY tsconfig.base.json ./
-COPY apps/jogi-bot ./apps/jogi-bot
+COPY apps/toy-bear-bot ./apps/toy-bear-bot
 RUN npm run build --workspace=packages/shared && \
     npm run build --workspace=packages/discord-api && \
-    npm run build --workspace=apps/jogi-bot
+    npm run build --workspace=apps/toy-bear-bot
 
 FROM base AS production
 USER node
@@ -26,14 +26,14 @@ WORKDIR /app
 COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/packages/shared/dist ./packages/shared/dist
 COPY --from=build --chown=node:node /app/packages/discord-api/dist ./packages/discord-api/dist
-COPY --from=build --chown=node:node /app/apps/jogi-bot/dist ./apps/jogi-bot/dist
+COPY --from=build --chown=node:node /app/apps/toy-bear-bot/dist ./apps/toy-bear-bot/dist
 
 COPY --chown=node:node package*.json ./
 COPY --chown=node:node packages/shared/package.json ./packages/shared/
 COPY --chown=node:node packages/discord-api/package.json ./packages/discord-api/
-COPY --chown=node:node apps/jogi-bot/package.json ./apps/jogi-bot/
+COPY --chown=node:node apps/toy-bear-bot/package.json ./apps/toy-bear-bot/
 
-WORKDIR /app/apps/jogi-bot
+WORKDIR /app/apps/toy-bear-bot
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD node -e "process.exit(0)"
