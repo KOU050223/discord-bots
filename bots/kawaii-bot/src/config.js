@@ -6,7 +6,8 @@ const envConfig = createConfig({
   optional: {
     NODE_ENV: 'development',
     LOG_LEVEL: 'info',
-    TARGET_EMOJI_NAME: 'kawaii'
+    TARGET_EMOJI_NAME: 'kawaii',
+    TEXT_GACHA_URL: 'http://localhost:8080'
   }
 });
 
@@ -17,5 +18,8 @@ export const config = {
   // リアクション設定
   emoji: {
     name: envConfig.TARGET_EMOJI_NAME
-  }
+  },
+
+  // Haskellサービス
+  textGachaUrl: envConfig.TEXT_GACHA_URL
 };

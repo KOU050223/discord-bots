@@ -84,6 +84,32 @@ client.on('messageReactionAdd', async (reaction, user) => {
   }
 });
 
+// /gacha コマンドハンドラ
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName !== 'gacha') return;
+
+  await interaction.deferReply();
+  const result = await fetchGacha(config.textGachaUrl);
+  await interaction.editReply(result ?? 'ガチャに失敗しました…');
+});
+
+// Haskellサービスを呼び出してガチャ結果を取得
+async function fetchGacha(url) {
+  try {
+    const res = await fetch(`${url}/gacha`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(3000)
+    });
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    const { result } = await res.json();
+    return result;
+  } catch (err) {
+    logger.warn('text-gachaサービス呼び出し失敗:', err.message);
+    return null;
+  }
+}
+
 // ログイン関数
 export function login() {
   return client.login(config.DISCORD_TOKEN);
