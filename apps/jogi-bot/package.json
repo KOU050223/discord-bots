@@ -1,0 +1,20 @@
+{
+  "name": "@discord-bots/jogi-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "じょぎ用統合Discordボット",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "@discord-bots/discord-api": "*",
+    "@discord-bots/shared": "*",
+    "discord.js": "^14.16.0"
+  }
+}
