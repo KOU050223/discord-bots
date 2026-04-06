@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  # jogi-bot - じょぎ用統合Bot（kawaii転送 / eyes-lips / gacha）
-  jogi-bot:
+  # toy-bear-bot - じょぎ用統合Bot（kawaii転送 / eyes-lips / gacha）
+  toy-bear-bot:
     build:
       context: .
-      dockerfile: apps/jogi-bot/Containerfile
+      dockerfile: apps/toy-bear-bot/Containerfile
       target: production
-    container_name: jogi-bot
+    container_name: toy-bear-bot
     restart: unless-stopped
     depends_on:
       text-gacha:
@@ -16,7 +16,7 @@ services:
       - NODE_ENV=production
       - TEXT_GACHA_URL=http://text-gacha:8080
     env_file:
-      - apps/jogi-bot/.env
+      - apps/toy-bear-bot/.env
     logging:
       driver: "json-file"
       options:

@@ -6,7 +6,7 @@ import { setupKawaii } from './features/kawaii.js';
 import { setupEyesLips } from './features/eyes-lips.js';
 import { setupGacha } from './features/gacha.js';
 
-const logger = createLogger('jogi-bot');
+const logger = createLogger('toy-bear-bot');
 
 const client = createDiscordClient({
   intents: [
