@@ -65,7 +65,7 @@ podman compose up -d --build
 ### 手動でコマンドを登録する場合
 
 ```bash
-pnpm --filter @discord-bots/toy-bear-bot deploy
+npm run deploy -w apps/toy-bear-bot
 ```
 
 ### 3. ログ確認
