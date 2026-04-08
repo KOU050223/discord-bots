@@ -1,6 +1,16 @@
 import type { Client } from 'discord.js';
 import type { Logger } from '@discord-bots/shared';
-import { config } from '../config.js';
+
+const TARGET_CHARS = '情報技術研究部'.split('');
+
+function shuffleChars(): string {
+  const arr = [...TARGET_CHARS];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.join('');
+}
 
 export function setupGacha(client: Client, logger: Logger): void {
   client.on('interactionCreate', async (interaction) => {
@@ -8,27 +18,8 @@ export function setupGacha(client: Client, logger: Logger): void {
     if (interaction.commandName !== 'gacha') return;
 
     await interaction.deferReply();
-    const result = await fetchGacha(config.kawaii.textGachaUrl, logger);
-    await interaction.editReply(result ?? 'ガチャに失敗しました…');
+    await interaction.editReply(shuffleChars());
   });
 
   logger.info('gacha機能を初期化しました');
-}
-
-async function fetchGacha(url: string, logger: Logger): Promise<string | null> {
-  try {
-    const res = await fetch(`${url}/gacha`, {
-      method: 'POST',
-      signal: AbortSignal.timeout(3000),
-    });
-    if (!res.ok) throw new Error(`status ${res.status}`);
-    const data = await res.json();
-    if (!data || typeof data.result !== 'string') {
-      throw new Error('Invalid response format');
-    }
-    return data.result;
-  } catch (err) {
-    logger.warn('text-gachaサービス呼び出し失敗:', err);
-    return null;
-  }
 }

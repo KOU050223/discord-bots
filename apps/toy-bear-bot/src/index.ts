@@ -19,7 +19,7 @@ const client = createDiscordClient({
 
 setupErrorHandlers(client, logger);
 
-client.once('ready', () => {
+client.once('clientReady', () => {
   logger.success(`${client.user!.tag} としてログインしました`);
   logger.info(`転送先チャンネルID: ${config.FORWARD_CHANNEL_ID}`);
 });

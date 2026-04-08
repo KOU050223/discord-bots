@@ -6,7 +6,6 @@ const envConfig = createConfig({
     NODE_ENV: 'development',
     LOG_LEVEL: 'info',
     TARGET_EMOJI_NAME: 'kawaii',
-    TEXT_GACHA_URL: 'http://localhost:8080',
   },
 });
 
@@ -17,7 +16,6 @@ export const config = {
   LOG_LEVEL: envConfig.LOG_LEVEL,
   kawaii: {
     emojiName: envConfig.TARGET_EMOJI_NAME,
-    textGachaUrl: envConfig.TEXT_GACHA_URL,
   },
   eyesLips: {
     triggers: [':eyes:', '👀'],

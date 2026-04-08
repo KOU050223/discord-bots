@@ -9,40 +9,10 @@ services:
       target: production
     container_name: toy-bear-bot
     restart: unless-stopped
-    depends_on:
-      text-gacha:
-        condition: service_healthy
     environment:
       - NODE_ENV=production
-      - TEXT_GACHA_URL=http://text-gacha:8080
     env_file:
       - apps/toy-bear-bot/.env
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    networks:
-      - discord-bots
-
-  # text-gacha - Haskellテキストシャッフルサービス
-  text-gacha:
-    build:
-      context: services/text-gacha
-      dockerfile: Containerfile
-      target: production
-    container_name: text-gacha
-    restart: unless-stopped
-    environment:
-      - PORT=8080
-    expose:
-      - "8080"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 5s
-      start_period: 15s
-      retries: 3
     logging:
       driver: "json-file"
       options:
