@@ -5,7 +5,9 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const TARGET_CHARS = '情報技術研究部'.split('');
+const REVERSED_CHARS = [...TARGET_CHARS].reverse();
 const JYOGI_EMOJI = ':jyogi2014:';
+const FIVE_MATCH_STICKER_ID = '1491081864323141793';
 const DATA_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'data');
 const RECORDS_FILE = join(DATA_DIR, 'gacha-records.json');
 
@@ -50,8 +52,16 @@ function shuffleChars(): string[] {
   return arr;
 }
 
+function countMatches(shuffled: string[], target: string[]): number {
+  return shuffled.filter((char, i) => char === target[i]).length;
+}
+
 function isAllCorrect(shuffled: string[]): boolean {
-  return shuffled.every((char, i) => char === TARGET_CHARS[i]);
+  return countMatches(shuffled, TARGET_CHARS) === TARGET_CHARS.length;
+}
+
+function isAllReversed(shuffled: string[]): boolean {
+  return countMatches(shuffled, REVERSED_CHARS) === REVERSED_CHARS.length;
 }
 
 function formatResult(shuffled: string[]): string {
@@ -71,21 +81,31 @@ export function setupGacha(client: Client, logger: Logger): void {
 
     await interaction.deferReply();
     const shuffled = shuffleChars();
+    const normalMatches = countMatches(shuffled, TARGET_CHARS);
 
     if (isAllCorrect(shuffled)) {
+      // 全部揃った！
       const data = loadData();
       const rank = data.records.length + 1;
       const timestamp = new Date().toISOString();
-      const username = interaction.user.username;
-      const userId = interaction.user.id;
-
-      saveRecord({ username, userId, timestamp, rank });
+      saveRecord({ username: interaction.user.username, userId: interaction.user.id, timestamp, rank });
 
       const jyogiLine = Array(7).fill(JYOGI_EMOJI).join('');
-      const message = `${jyogiLine}\nあなたが**${rank}人目**の情報技術研究部を揃えた人です`;
-      await interaction.editReply(message);
+      await interaction.editReply(`${jyogiLine}\nあなたが**${rank}人目**の情報技術研究部を揃えた人です`);
+
+    } else if (isAllReversed(shuffled)) {
+      // 逆順に揃った！
+      const reversedText = REVERSED_CHARS.join('');
+      await interaction.editReply(`\`\`\`\n${reversedText}\n\`\`\`\n逆順で揃えてしまった...`);
+
     } else {
+      // 通常結果
       await interaction.editReply(formatResult(shuffled));
+
+      // 5文字一致でスタンプ送信
+      if (normalMatches === 5 && interaction.channel?.isSendable()) {
+        await interaction.channel.send({ stickers: [FIVE_MATCH_STICKER_ID] });
+      }
     }
   });
 
