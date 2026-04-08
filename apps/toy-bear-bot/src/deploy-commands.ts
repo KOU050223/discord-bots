@@ -7,6 +7,7 @@ const COMMANDS = [
     name: 'gacha',
     description: '情報技術研究部の文字をシャッフルします',
   },
+
 ];
 
 export async function registerCommands(logger: Logger): Promise<void> {

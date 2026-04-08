@@ -16,3 +16,6 @@ dist-newstyle/
 
 # Nix
 .direnv/
+
+# ガチャデータ（将来的に外部DBに移行予定）
+apps/*/data/
