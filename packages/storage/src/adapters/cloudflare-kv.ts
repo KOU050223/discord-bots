@@ -22,7 +22,10 @@ export class CloudflareKVAdapter implements StorageAdapter {
       if (response === null || response === undefined) return null;
       // SDK returns a Response object for KV values
       if (response instanceof Response) {
-        if (!response.ok) return null;
+        if (response.status === 404) return null;
+        if (!response.ok) {
+          throw new Error(`Cloudflare KV get failed: ${response.status} ${response.statusText}`);
+        }
         return await response.text();
       }
       return String(response);

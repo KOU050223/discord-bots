@@ -22,7 +22,8 @@ interface GachaRecord {
 async function getWinnerCount(storage: StorageAdapter): Promise<number> {
   const raw = await storage.get(KV_WINNER_COUNT);
   if (raw === null) return 0;
-  return parseInt(raw, 10);
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 }
 
 async function saveWinner(storage: StorageAdapter, record: GachaRecord): Promise<void> {
