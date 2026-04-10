@@ -10,12 +10,6 @@ import { registerCommands } from './deploy-commands.js';
 
 const logger = createLogger('toy-bear-bot');
 
-const storage = new CloudflareKVAdapter(
-  config.cloudflare.apiToken,
-  config.cloudflare.accountId,
-  config.cloudflare.kvNamespaceId,
-);
-
 const client = createDiscordClient({
   intents: [
     GatewayIntentBits.Guilds,
@@ -49,6 +43,11 @@ if (config.features.eyesLips) {
 }
 
 if (config.features.gacha) {
+  const storage = new CloudflareKVAdapter(
+    config.cloudflare.apiToken,
+    config.cloudflare.accountId,
+    config.cloudflare.kvNamespaceId,
+  );
   setupGacha(client, logger, storage);
   logger.info('Feature: gacha 有効');
 } else {

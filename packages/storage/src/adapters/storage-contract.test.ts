@@ -7,7 +7,7 @@ import { InMemoryAdapter } from './in-memory.js';
  * すべての実装はこの契約を満たす必要がある。
  * 新しいアダプターを追加したら runStorageContractTests に渡してテストすること。
  */
-function runStorageContractTests(name: string, createAdapter: () => StorageAdapter) {
+export function runStorageContractTests(name: string, createAdapter: () => StorageAdapter) {
   describe(`${name} — StorageAdapter 契約`, () => {
     it('put した値を get で取得できる', async () => {
       const adapter = createAdapter();

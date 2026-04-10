@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CloudflareKVAdapter } from './cloudflare-kv.js';
+import { runStorageContractTests } from './storage-contract.test.js';
 
 const mockGet = vi.fn();
 const mockUpdate = vi.fn();
@@ -116,4 +117,48 @@ describe('CloudflareKVAdapter', () => {
       );
     });
   });
+
+  describe('isNotFoundError — 構造チェック', () => {
+    it('status=404 を持つ非 APIError オブジェクトでも null を返す', async () => {
+      // SDK の境界を越えた場合に instanceof が失敗するケースを想定
+      mockGet.mockRejectedValue({ status: 404, message: 'not found' });
+
+      const adapter = createAdapter();
+      expect(await adapter.get('key')).toBeNull();
+    });
+
+    it('status=500 を持つ非 APIError オブジェクトは throw する', async () => {
+      mockGet.mockRejectedValue({ status: 500, message: 'server error' });
+
+      const adapter = createAdapter();
+      await expect(adapter.get('key')).rejects.toMatchObject({ status: 500 });
+    });
+  });
+});
+
+// CloudflareKVAdapter が StorageAdapter 契約を満たすことをモック経由で検証
+runStorageContractTests('CloudflareKVAdapter', () => {
+  mockGet.mockImplementation(async (_ns, key) => {
+    // put で保存した値を返すインメモリ的な動作をモックで再現
+    const store = (mockGet as unknown as { _store?: Map<string, string> })._store;
+    const value = store?.get(key) ?? null;
+    if (value === null) return new Response('', { status: 404 });
+    return new Response(value, { status: 200 });
+  });
+  mockUpdate.mockImplementation(async (_ns, key, body: { value: string }) => {
+    let store = (mockGet as unknown as { _store?: Map<string, string> })._store;
+    if (!store) {
+      store = new Map();
+      (mockGet as unknown as { _store: Map<string, string> })._store = store;
+    }
+    store.set(key, body.value);
+  });
+  mockDelete.mockImplementation(async (_ns, key) => {
+    (mockGet as unknown as { _store?: Map<string, string> })._store?.delete(key);
+  });
+
+  // 各テストケースごとにストアをリセット
+  (mockGet as unknown as { _store: Map<string, string> })._store = new Map();
+
+  return new CloudflareKVAdapter(API_TOKEN, ACCOUNT_ID, NAMESPACE_ID);
 });

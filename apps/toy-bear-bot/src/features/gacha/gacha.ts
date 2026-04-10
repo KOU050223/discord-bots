@@ -147,17 +147,23 @@ export function setupGacha(client: Client, logger: Logger, storage: StorageAdapt
         }
         logger.info(`[gacha debug] ユーザー ${interaction.user.tag} が全て揃えました（記録なし）`);
       } else {
-        const count = await getWinnerCount(storage);
-        const rank = count + 1;
-        const timestamp = new Date().toISOString();
-        await saveWinner(storage, { username: interaction.user.username, userId: interaction.user.id, timestamp, rank });
+        try {
+          const count = await getWinnerCount(storage);
+          const rank = count + 1;
+          const timestamp = new Date().toISOString();
+          await saveWinner(storage, { username: interaction.user.username, userId: interaction.user.id, timestamp, rank });
 
-        const jyogiLine = Array(7).fill(JYOGI_EMOJI).join('');
-        await interaction.editReply(`${jyogiLine}\nあなたが**${rank}人目**の情報技術研究部を揃えた人です\nおめでとう！あなたは**名誉じょぎ部員**に認定されました！`);
-        if (interaction.channel?.isSendable()) {
-          await interaction.channel.send({ stickers: [ALL_CORRECT_STICKER_ID] });
+          const jyogiLine = Array(7).fill(JYOGI_EMOJI).join('');
+          await interaction.editReply(`${jyogiLine}\nあなたが**${rank}人目**の情報技術研究部を揃えた人です\nおめでとう！あなたは**名誉じょぎ部員**に認定されました！`);
+          if (interaction.channel?.isSendable()) {
+            await interaction.channel.send({ stickers: [ALL_CORRECT_STICKER_ID] });
+          }
+          logger.info(`ユーザー ${interaction.user.tag} が全て揃えました！順位: ${rank}`);
+        } catch (err) {
+          logger.error(`ガチャ記録の保存に失敗しました: ${interaction.user.tag}`, err);
+          await interaction.editReply('おめでとう！全て揃えましたが、記録の保存に失敗しました。もう一度お試しください。');
+          return;
         }
-        logger.info(`ユーザー ${interaction.user.tag} が全て揃えました！順位: ${rank}`);
       }
 
     } else if (isAllReversed(shuffled)) {

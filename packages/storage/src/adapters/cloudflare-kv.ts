@@ -53,8 +53,8 @@ export class CloudflareKVAdapter implements StorageAdapter {
 }
 
 function isNotFoundError(err: unknown): boolean {
-  if (err instanceof Cloudflare.APIError) {
-    return err.status === 404;
-  }
+  const status = (err as { status?: unknown })?.status;
+  if (typeof status === 'number' && status === 404) return true;
+  if (err instanceof Cloudflare.APIError) return err.status === 404;
   return false;
 }
