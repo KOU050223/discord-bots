@@ -8,12 +8,23 @@ export interface ActionLogEntry {
   extra?: Record<string, string>;
 }
 
-function todayKey(botName: string): string {
-  const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  return `logs:${botName}:${date}`;
+function dateKeyForTs(botName: string, ts: string): string {
+  return `logs:${botName}:${ts.slice(0, 10)}`; // YYYY-MM-DD
+}
+
+function parseLogArray(raw: string | null): ActionLogEntry[] {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as ActionLogEntry[]) : [];
+  } catch {
+    return [];
+  }
 }
 
 export class KVLogSink {
+  private static readonly MAX_BUFFER_SIZE = 10_000;
+
   private storage: StorageAdapter;
   private botName: string;
   private buffer: ActionLogEntry[] = [];
@@ -29,6 +40,9 @@ export class KVLogSink {
   }
 
   record(entry: Omit<ActionLogEntry, 'ts'>): void {
+    if (this.buffer.length >= KVLogSink.MAX_BUFFER_SIZE) {
+      this.buffer.shift(); // 古いデータを破棄
+    }
     this.buffer.push({ ts: new Date().toISOString(), ...entry });
   }
 
@@ -42,12 +56,22 @@ export class KVLogSink {
     if (this.buffer.length === 0) return;
 
     const toWrite = this.buffer.splice(0);
-    const key = todayKey(this.botName);
+
+    // ts 基準で日付ごとにバケットに分割する（日跨ぎ対応）
+    const buckets = new Map<string, ActionLogEntry[]>();
+    for (const entry of toWrite) {
+      const key = dateKeyForTs(this.botName, entry.ts);
+      const arr = buckets.get(key) ?? [];
+      arr.push(entry);
+      buckets.set(key, arr);
+    }
 
     try {
-      const existing = await this.storage.get(key);
-      const prev: ActionLogEntry[] = existing ? (JSON.parse(existing) as ActionLogEntry[]) : [];
-      await this.storage.put(key, JSON.stringify([...prev, ...toWrite]));
+      for (const [key, batch] of buckets) {
+        const existing = await this.storage.get(key);
+        const prev = parseLogArray(existing);
+        await this.storage.put(key, JSON.stringify([...prev, ...batch]));
+      }
     } catch {
       // フラッシュ失敗時はバッファに戻して次回リトライ
       this.buffer.unshift(...toWrite);
