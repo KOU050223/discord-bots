@@ -1,4 +1,4 @@
-import { EmbedBuilder, type Client } from 'discord.js';
+import { type Client } from 'discord.js';
 import type { Logger } from '@discord-bots/shared';
 import type { StorageAdapter, KVLogSink } from '@discord-bots/storage';
 import { GACHA_DEBUG, DEBUG_SCENARIO_ORDER, type DebugScenario } from './debug.js';
@@ -62,20 +62,6 @@ function formatResult(shuffled: string[]): string {
   return `\`\`\`ansi\n${colored.join('')}\n\`\`\``;
 }
 
-function getRarityColor(matches: number): number {
-  if (matches >= 7) return 0xffd700;
-  if (matches === 6) return 0xff8c00;
-  if (matches === 5) return 0xf1c40f;
-  if (matches === 4) return 0x9b59b6;
-  if (matches >= 2) return 0x3498db;
-  return 0x95a5a6;
-}
-
-function buildResultEmbed(shuffled: string[], matches: number): EmbedBuilder {
-  return new EmbedBuilder()
-    .setDescription(formatResult(shuffled))
-    .setColor(getRarityColor(matches));
-}
 
 // 指定したマッチ数になるように TARGET_CHARS を部分的に崩した配列を返す。
 // デバッグ用: 特定レアリティの演出を再現するため。
@@ -176,8 +162,7 @@ export function setupGacha(client: Client, logger: Logger, storage: StorageAdapt
 
     } else {
       // 通常結果
-      const embed = buildResultEmbed(shuffled, normalMatches);
-      await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply(formatResult(shuffled));
 
       // 5文字一致でスタンプ送信
       if (normalMatches === 5 && interaction.channel?.isSendable()) {
