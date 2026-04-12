@@ -19,10 +19,12 @@ export function createLogger(name: string, options: LoggerOptions = {}): winston
   const transports: winston.transport[] = [
     new winston.transports.Console({
       format: winston.format.combine(
+        winston.format.errors({ stack: true }),
+        winston.format.splat(),
         winston.format.colorize(),
-        winston.format.printf(({ level, message, ...meta }) => {
+        winston.format.printf(({ level, message, stack, ...meta }) => {
           const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
-          return `[${name}] ${level}: ${message}${metaStr}`;
+          return `[${name}] ${level}: ${String(stack ?? message)}${metaStr}`;
         }),
       ),
     }),
@@ -33,6 +35,17 @@ export function createLogger(name: string, options: LoggerOptions = {}): winston
       new AxiomTransport({
         token: process.env.AXIOM_TOKEN,
         dataset: process.env.AXIOM_DATASET,
+      }),
+    );
+  }
+
+  if (process.env.DISCORD_ERROR_WEBHOOK_URL) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { default: DiscordTransport } = require('winston-discord-transport');
+    transports.push(
+      new DiscordTransport({
+        webhookUrl: process.env.DISCORD_ERROR_WEBHOOK_URL,
+        level: 'error',
       }),
     );
   }
