@@ -3,7 +3,7 @@ import type { Logger } from '@discord-bots/shared';
 import { config } from '../config.js';
 
 export function setupEyesLips(client: Client, logger: Logger): void {
-  client.on('messageCreate', async (message) => {
+  client.on('messageCreate', (message) => void (async () => {
     try {
       if (message.author.bot) return;
 
@@ -27,7 +27,7 @@ export function setupEyesLips(client: Client, logger: Logger): void {
     } catch (error) {
       logger.error('メッセージ処理エラー:', error);
     }
-  });
+  })());
 
   logger.info(`eyes-lips機能を初期化しました (triggers: ${config.eyesLips.triggers.join(', ')})`);
 }

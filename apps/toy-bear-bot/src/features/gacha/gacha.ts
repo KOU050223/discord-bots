@@ -79,7 +79,7 @@ function buildShuffledForScenario(scenario: DebugScenario): string[] {
 export function setupGacha(client: Client, logger: Logger): void {
   let debugIndex = 0;
 
-  client.on('interactionCreate', async (interaction) => {
+  client.on('interactionCreate', (interaction) => void (async () => {
     if (!interaction.isChatInputCommand()) return;
     if (interaction.commandName !== 'gacha') return;
 
@@ -132,7 +132,7 @@ export function setupGacha(client: Client, logger: Logger): void {
         });
       }
     }
-  });
+  })());
 
   logger.info(`gacha機能を初期化しました${GACHA_DEBUG ? '（デバッグモード）' : ''}`);
 }

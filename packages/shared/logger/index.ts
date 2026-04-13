@@ -53,7 +53,6 @@ export function createLogger(name: string, options: LoggerOptions = {}): Logger 
   }
 
   if (process.env.DISCORD_ERROR_WEBHOOK_URL) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { default: DiscordTransport } = require('winston-discord-transport');
     transports.push(
       new DiscordTransport({

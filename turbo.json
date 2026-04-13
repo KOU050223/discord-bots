@@ -16,6 +16,9 @@
     "test:run": {
       "dependsOn": ["^build"],
       "outputs": []
+    },
+    "lint": {
+      "outputs": []
     }
   }
 }

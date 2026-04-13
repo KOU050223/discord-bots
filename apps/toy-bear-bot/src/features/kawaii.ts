@@ -3,7 +3,7 @@ import type { Logger } from '@discord-bots/shared';
 import { config } from '../config.js';
 
 export function setupKawaii(client: Client, logger: Logger): void {
-  client.on('messageReactionAdd', async (reaction, user) => {
+  client.on('messageReactionAdd', (reaction, user) => void (async () => {
     try {
       if (user.bot) return;
 
@@ -62,7 +62,7 @@ export function setupKawaii(client: Client, logger: Logger): void {
     } catch (error) {
       logger.error('メッセージ転送エラー:', error);
     }
-  });
+  })());
 
   logger.info(`kawaii機能を初期化しました (emoji: ${config.kawaii.emojiName})`);
 }
