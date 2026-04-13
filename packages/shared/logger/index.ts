@@ -1,64 +1,76 @@
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
+import winston from 'winston';
+import { WinstonTransport as AxiomTransport } from '@axiomhq/winston';
+
+const VALID_LEVELS = ['debug', 'info', 'warn', 'error'] as const;
+type LogLevel = (typeof VALID_LEVELS)[number];
 
 interface LoggerOptions {
   level?: LogLevel;
-  timestamp?: boolean;
 }
 
-export class Logger {
-  private name: string;
-  private level: LogLevel;
-  private timestamp: boolean;
+export type Logger = winston.Logger & {
+  success(message: string, ...meta: unknown[]): winston.Logger;
+};
 
-  constructor(name: string, options: LoggerOptions = {}) {
-    this.name = name;
-    const candidate = options.level ?? process.env.LOG_LEVEL;
-    this.level = LOG_LEVELS.includes(candidate as LogLevel) ? (candidate as LogLevel) : 'info';
-    this.timestamp = options.timestamp !== false;
+export function createLogger(name: string, options: LoggerOptions = {}): Logger {
+  const level: LogLevel =
+    options.level ?? (VALID_LEVELS.includes(process.env.LOG_LEVEL as LogLevel)
+      ? (process.env.LOG_LEVEL as LogLevel)
+      : 'info');
+
+  // ロガーレベルのフォーマット: 全 Transport に適用される正規化処理
+  const sharedFormat = winston.format.combine(
+    winston.format.errors({ stack: true }),
+    winston.format.splat(),
+    // winston-discord-transport は info.error.stack を参照するためマッピングを追加
+    winston.format((info) => {
+      if (info['stack'] && !info['error']) {
+        info['error'] = { stack: String(info['stack']) };
+      }
+      return info;
+    })(),
+  );
+
+  const transports: winston.transport[] = [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.printf(({ level, message, stack, ...meta }) => {
+          const metaStr = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+          return `[${name}] ${level}: ${String(stack ?? message)}${metaStr}`;
+        }),
+      ),
+    }),
+  ];
+
+  if (process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET) {
+    transports.push(
+      new AxiomTransport({
+        token: process.env.AXIOM_TOKEN,
+        dataset: process.env.AXIOM_DATASET,
+      }),
+    );
   }
 
-  private _formatMessage(emoji: string, ...args: unknown[]): unknown[] {
-    const time = this.timestamp ? `[${new Date().toISOString()}]` : '';
-    const prefix = `${time} ${emoji} [${this.name}]`;
-    return [prefix, ...args];
+  if (process.env.DISCORD_ERROR_WEBHOOK_URL) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { default: DiscordTransport } = require('winston-discord-transport');
+    transports.push(
+      new DiscordTransport({
+        webhook: process.env.DISCORD_ERROR_WEBHOOK_URL,
+        level: 'error',
+      }),
+    );
   }
 
-  private _shouldLog(level: LogLevel): boolean {
-    return LOG_LEVELS.indexOf(level) >= LOG_LEVELS.indexOf(this.level);
-  }
+  const logger = winston.createLogger({
+    level,
+    format: sharedFormat,
+    defaultMeta: { bot: name },
+    transports,
+  }) as Logger;
 
-  debug(...args: unknown[]): void {
-    if (this._shouldLog('debug')) {
-      console.debug(...this._formatMessage('🐛', ...args));
-    }
-  }
+  logger.success = (message: string, ...meta: unknown[]) => logger.info(message, ...meta);
 
-  info(...args: unknown[]): void {
-    if (this._shouldLog('info')) {
-      console.info(...this._formatMessage('ℹ️', ...args));
-    }
-  }
-
-  warn(...args: unknown[]): void {
-    if (this._shouldLog('warn')) {
-      console.warn(...this._formatMessage('⚠️', ...args));
-    }
-  }
-
-  error(...args: unknown[]): void {
-    if (this._shouldLog('error')) {
-      console.error(...this._formatMessage('❌', ...args));
-    }
-  }
-
-  success(...args: unknown[]): void {
-    if (this._shouldLog('info')) {
-      console.log(...this._formatMessage('✅', ...args));
-    }
-  }
-}
-
-export function createLogger(name: string, options?: LoggerOptions): Logger {
-  return new Logger(name, options);
+  return logger;
 }

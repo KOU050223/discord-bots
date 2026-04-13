@@ -17,11 +17,13 @@ export function setupEyesLips(client: Client, logger: Logger): void {
 
       await message.react(randomEmoji);
 
-      logger.info(
-        `👀 → ${randomEmoji} メッセージにリアクションしました`,
-        `ID: ${message.id}`,
-        `チャンネル: #${'name' in message.channel ? message.channel.name : 'DM'}`
-      );
+      logger.info('eyes-lips: リアクションしました', {
+        feature: 'eyes-lips',
+        action: 'react',
+        user: message.author.username,
+        emoji: randomEmoji,
+        messageId: message.id,
+      });
     } catch (error) {
       logger.error('メッセージ処理エラー:', error);
     }

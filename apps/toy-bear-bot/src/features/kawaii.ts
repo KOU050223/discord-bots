@@ -52,12 +52,13 @@ export function setupKawaii(client: Client, logger: Logger): void {
       const embed = createMessageEmbed(reaction as MessageReaction, user as User);
       await guildChannel.send({ embeds: [embed] });
 
-      logger.info(
-        'メッセージを転送しました',
-        `リアクション: ${reaction.emoji.name}`,
-        `元メッセージID: ${reaction.message.id}`,
-        `送信者: ${(user as User).tag}`
-      );
+      logger.info('kawaii: メッセージを転送しました', {
+        feature: 'kawaii',
+        action: 'forward',
+        user: (user as User).username,
+        messageId: reaction.message.id,
+        emoji: reaction.emoji.name,
+      });
     } catch (error) {
       logger.error('メッセージ転送エラー:', error);
     }

@@ -1,6 +1,5 @@
 import { createLogger, createShutdownManager } from '@discord-bots/shared';
 import { createDiscordClient, setupErrorHandlers } from '@discord-bots/discord-api';
-import { CloudflareKVAdapter } from '@discord-bots/storage';
 import { GatewayIntentBits, Partials } from 'discord.js';
 import { config } from './config.js';
 import { setupKawaii } from './features/kawaii.js';
@@ -23,7 +22,7 @@ const client = createDiscordClient({
 setupErrorHandlers(client, logger);
 
 client.once('clientReady', async () => {
-  logger.success(`${client.user!.tag} としてログインしました`);
+  logger.info(`${client.user!.tag} としてログインしました`);
   logger.info(`転送先チャンネルID: ${config.FORWARD_CHANNEL_ID}`);
   await registerCommands(logger);
 });
@@ -43,12 +42,7 @@ if (config.features.eyesLips) {
 }
 
 if (config.features.gacha) {
-  const storage = new CloudflareKVAdapter(
-    config.cloudflare.apiToken,
-    config.cloudflare.accountId,
-    config.cloudflare.kvNamespaceId,
-  );
-  setupGacha(client, logger, storage);
+  setupGacha(client, logger);
   logger.info('Feature: gacha 有効');
 } else {
   logger.info('Feature: gacha 無効 (FEATURE_GACHA=false)');
@@ -57,6 +51,8 @@ if (config.features.gacha) {
 const shutdownManager = createShutdownManager(logger);
 shutdownManager.onShutdown(async () => {
   logger.info('Discord クライアントを停止中...');
+  logger.end(); // Axiom Transport のバッファをフラッシュ
+  await new Promise(resolve => setTimeout(resolve, 1000));
   await client.destroy();
 });
 shutdownManager.register();
