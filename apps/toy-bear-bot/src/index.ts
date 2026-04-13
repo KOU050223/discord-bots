@@ -21,11 +21,11 @@ const client = createDiscordClient({
 
 setupErrorHandlers(client, logger);
 
-client.once('clientReady', async () => {
+client.once('clientReady', () => void (async () => {
   logger.info(`${client.user!.tag} としてログインしました`);
   logger.info(`転送先チャンネルID: ${config.FORWARD_CHANNEL_ID}`);
   await registerCommands(logger);
-});
+})());
 
 if (config.features.kawaii) {
   setupKawaii(client, logger);
