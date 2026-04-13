@@ -22,9 +22,14 @@ const client = createDiscordClient({
 setupErrorHandlers(client, logger);
 
 client.once('clientReady', () => void (async () => {
-  logger.info(`${client.user!.tag} としてログインしました`);
-  logger.info(`転送先チャンネルID: ${config.FORWARD_CHANNEL_ID}`);
-  await registerCommands(logger);
+  try {
+    logger.info(`${client.user!.tag} としてログインしました`);
+    logger.info(`転送先チャンネルID: ${config.FORWARD_CHANNEL_ID}`);
+    await registerCommands(logger);
+  } catch (error) {
+    logger.error('起動処理に失敗しました:', error);
+    process.exit(1);
+  }
 })());
 
 if (config.features.kawaii) {
