@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "no-console": "off"
+  },
+  "ignorePatterns": ["dist/**", "node_modules/**", "**/*.d.ts"],
+  "env": {
+    "builtin": true,
+    "es2022": true,
+    "node": true
+  }
+}

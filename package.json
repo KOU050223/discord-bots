@@ -10,6 +10,7 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "typecheck": "turbo typecheck",
+    "lint": "oxlint",
     "test": "vitest",
     "test:run": "turbo test:run",
     "prepare": "turbo build --filter=./packages/*"
@@ -17,6 +18,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@typescript/native-preview": "^7.0.0-dev.20260409.1",
+    "oxlint": "^1.59.0",
     "tsdown": "^0.21.7",
     "tsx": "^4.21.0",
     "turbo": "^2.9.5",
