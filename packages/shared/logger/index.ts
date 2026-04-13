@@ -8,9 +8,11 @@ interface LoggerOptions {
   level?: LogLevel;
 }
 
-export type Logger = winston.Logger;
+export type Logger = winston.Logger & {
+  success(message: string, ...meta: unknown[]): winston.Logger;
+};
 
-export function createLogger(name: string, options: LoggerOptions = {}): winston.Logger {
+export function createLogger(name: string, options: LoggerOptions = {}): Logger {
   const level: LogLevel =
     options.level ?? (VALID_LEVELS.includes(process.env.LOG_LEVEL as LogLevel)
       ? (process.env.LOG_LEVEL as LogLevel)
@@ -20,6 +22,13 @@ export function createLogger(name: string, options: LoggerOptions = {}): winston
   const sharedFormat = winston.format.combine(
     winston.format.errors({ stack: true }),
     winston.format.splat(),
+    // winston-discord-transport は info.error.stack を参照するためマッピングを追加
+    winston.format((info) => {
+      if (info['stack'] && !info['error']) {
+        info['error'] = { stack: String(info['stack']) };
+      }
+      return info;
+    })(),
   );
 
   const transports: winston.transport[] = [
@@ -48,16 +57,20 @@ export function createLogger(name: string, options: LoggerOptions = {}): winston
     const { default: DiscordTransport } = require('winston-discord-transport');
     transports.push(
       new DiscordTransport({
-        webhookUrl: process.env.DISCORD_ERROR_WEBHOOK_URL,
+        webhook: process.env.DISCORD_ERROR_WEBHOOK_URL,
         level: 'error',
       }),
     );
   }
 
-  return winston.createLogger({
+  const logger = winston.createLogger({
     level,
     format: sharedFormat,
     defaultMeta: { bot: name },
     transports,
-  });
+  }) as Logger;
+
+  logger.success = (message: string, ...meta: unknown[]) => logger.info(message, ...meta);
+
+  return logger;
 }
