@@ -104,6 +104,9 @@ describe('formatResult', () => {
     expect(result).toContain('報');
     // 2番目の「情」はそのまま
     expect(result).toContain('情');
+    // ANSI 緑色エスケープで包まれていないことを確認
+    expect(result).not.toContain('\x1b[32m報\x1b[0m');
+    expect(result).not.toContain('\x1b[32m情\x1b[0m');
   });
 
   it('```ansi コードブロックで囲まれる', () => {
@@ -134,6 +137,22 @@ describe('buildShuffledForMatches', () => {
       expect(buildShuffledForMatches(matches)).toHaveLength(7);
     }
   });
+
+  it('負の値は RangeError を投げる', () => {
+    expect(() => buildShuffledForMatches(-1)).toThrow(RangeError);
+  });
+
+  it('TARGET_CHARS.length を超える値は RangeError を投げる', () => {
+    expect(() => buildShuffledForMatches(8)).toThrow(RangeError);
+  });
+
+  it('6（n-1 一致）は RangeError を投げる', () => {
+    expect(() => buildShuffledForMatches(6)).toThrow(RangeError);
+  });
+
+  it('小数値は RangeError を投げる', () => {
+    expect(() => buildShuffledForMatches(2.5)).toThrow(RangeError);
+  });
 });
 
 describe('shuffleChars', () => {
@@ -148,10 +167,13 @@ describe('shuffleChars', () => {
 
   it('Math.random を固定すると決定的な結果になる', () => {
     const mockRandom = vi.spyOn(Math, 'random').mockReturnValue(0);
-    const result = shuffleChars();
-    expect(result).toHaveLength(7);
-    expect([...result].sort()).toEqual([...TARGET_CHARS].sort());
-    mockRandom.mockRestore();
+    try {
+      const result = shuffleChars();
+      expect(result).toHaveLength(7);
+      expect([...result].sort()).toEqual([...TARGET_CHARS].sort());
+    } finally {
+      mockRandom.mockRestore();
+    }
   });
 });
 

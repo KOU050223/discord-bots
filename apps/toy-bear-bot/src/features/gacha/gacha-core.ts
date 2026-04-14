@@ -33,6 +33,12 @@ export function formatResult(shuffled: string[]): string {
 }
 
 export function buildShuffledForMatches(matches: number): string[] {
+  if (!Number.isInteger(matches) || matches < 0 || matches > TARGET_CHARS.length) {
+    throw new RangeError(`matches must be an integer between 0 and ${TARGET_CHARS.length}`);
+  }
+  if (matches === TARGET_CHARS.length - 1) {
+    throw new RangeError(`matches=${matches} is not representable for unique-character permutations`);
+  }
   const result = [...TARGET_CHARS];
   const mismatchCount = TARGET_CHARS.length - matches;
   if (mismatchCount < 2) return result;
