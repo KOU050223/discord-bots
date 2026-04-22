@@ -18,6 +18,7 @@
     "@discord-bots/discord-api": "*",
     "@discord-bots/shared": "*",
     "@resvg/resvg-js": "^2.6.2",
+    "@twemoji/svg": "^15.0.0",
     "discord.js": "^14.16.0",
     "satori": "^0.18.2"
   }

@@ -1,5 +1,9 @@
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
+import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
 
 const DPI = 2;
 const YEN = new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY' });
@@ -83,15 +87,21 @@ async function fetchIcon(src?: string): Promise<string | undefined> {
   }
 }
 
+const emojiCache = new Map<string, string>();
+
 async function loadEmoji(segment: string): Promise<string> {
   const str = segment.indexOf('\u200D') === -1 ? segment.replace(/\uFE0F/g, '') : segment;
-  const code = [...str].map((c) => c.codePointAt(0)!.toString(16)).join('-');
+  const code = [...str].map((c) => c.codePointAt(0)!.toString(16)).join('-').toLowerCase();
+
+  const cached = emojiCache.get(code);
+  if (cached) return cached;
+
   try {
-    const res = await fetchWithTimeout(
-      `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${code.toLowerCase()}.svg`
-    );
-    if (!res.ok) return segment;
-    return toDataUri(await res.arrayBuffer(), 'image/svg+xml');
+    const path = require.resolve(`@twemoji/svg/${code}.svg`);
+    const buf = await readFile(path);
+    const dataUri = toDataUri(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength), 'image/svg+xml');
+    emojiCache.set(code, dataUri);
+    return dataUri;
   } catch {
     return segment;
   }
