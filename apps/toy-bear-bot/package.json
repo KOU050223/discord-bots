@@ -17,6 +17,8 @@
   "dependencies": {
     "@discord-bots/discord-api": "*",
     "@discord-bots/shared": "*",
-    "discord.js": "^14.16.0"
+    "@resvg/resvg-js": "^2.6.2",
+    "discord.js": "^14.16.0",
+    "satori": "^0.18.2"
   }
 }
