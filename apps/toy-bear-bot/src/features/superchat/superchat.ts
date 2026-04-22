@@ -98,7 +98,21 @@ async function loadEmoji(segment: string): Promise<string> {
 }
 
 // Discord カスタム絵文字構文: <:name:id> / <a:name:id>
-const CUSTOM_EMOJI_RE = /<(a)?:(\w+):(\d+)>/g;
+export const CUSTOM_EMOJI_RE = /<(a)?:(\w+):(\d+)>/g;
+
+const EMOJI_FETCH_CONCURRENCY = 8;
+
+async function mapWithConcurrency<T, R>(
+  items: readonly T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    results.push(...(await Promise.all(items.slice(i, i + concurrency).map(fn))));
+  }
+  return results;
+}
 
 type MessageSegment =
   | { kind: 'text'; value: string }
@@ -144,14 +158,20 @@ async function fetchCustomEmoji(id: string): Promise<string | undefined> {
 
 export async function generateImage({ price, name, iconSrc: rawIcon, message }: Props): Promise<Uint8Array> {
   const segments = message ? parseMessage(message) : [];
-  const fontText = `x${stripCustomEmoji(message ?? '')}`;
+  // CDN 取得失敗時の `:name:` フォールバック表示用に、絵文字名もフォントテキストに含める
+  const emojiFallbackText = segments
+    .flatMap((seg) => (seg.kind === 'emoji' ? [`:${seg.name}:`] : []))
+    .join('');
+  const fontText = `x${stripCustomEmoji(message ?? '')}${emojiFallbackText}`;
   const emojiIds = [...new Set(segments.flatMap((s) => (s.kind === 'emoji' ? [s.id] : [])))];
 
   const [fontNormal, fontBold, iconSrc, emojiSrcs] = await Promise.all([
     fetchFont(fontText, 400),
     fetchFont(`${name}￥${price},`, 500),
     fetchIcon(rawIcon),
-    Promise.all(emojiIds.map(async (id) => [id, await fetchCustomEmoji(id)] as const)),
+    mapWithConcurrency(emojiIds, EMOJI_FETCH_CONCURRENCY, async (id) =>
+      [id, await fetchCustomEmoji(id)] as const
+    ),
   ]);
   const emojiMap = new Map(emojiSrcs);
 
