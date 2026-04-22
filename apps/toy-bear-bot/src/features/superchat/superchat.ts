@@ -97,12 +97,63 @@ async function loadEmoji(segment: string): Promise<string> {
   }
 }
 
+// Discord カスタム絵文字構文: <:name:id> / <a:name:id>
+const CUSTOM_EMOJI_RE = /<(a)?:(\w+):(\d+)>/g;
+
+type MessageSegment =
+  | { kind: 'text'; value: string }
+  | { kind: 'emoji'; id: string; name: string; animated: boolean };
+
+export function parseMessage(input: string): MessageSegment[] {
+  const segments: MessageSegment[] = [];
+  let lastIndex = 0;
+  for (const match of input.matchAll(CUSTOM_EMOJI_RE)) {
+    const start = match.index ?? 0;
+    if (start > lastIndex) {
+      segments.push({ kind: 'text', value: input.slice(lastIndex, start) });
+    }
+    segments.push({
+      kind: 'emoji',
+      animated: match[1] === 'a',
+      name: match[2]!,
+      id: match[3]!,
+    });
+    lastIndex = start + match[0].length;
+  }
+  if (lastIndex < input.length) {
+    segments.push({ kind: 'text', value: input.slice(lastIndex) });
+  }
+  return segments;
+}
+
+function stripCustomEmoji(input: string): string {
+  return input.replace(CUSTOM_EMOJI_RE, '');
+}
+
+async function fetchCustomEmoji(id: string): Promise<string | undefined> {
+  try {
+    const res = await fetchWithTimeout(
+      `https://cdn.discordapp.com/emojis/${id}.png?size=64`
+    );
+    if (!res.ok) return undefined;
+    return toDataUri(await res.arrayBuffer(), 'image/png');
+  } catch {
+    return undefined;
+  }
+}
+
 export async function generateImage({ price, name, iconSrc: rawIcon, message }: Props): Promise<Uint8Array> {
-  const [fontNormal, fontBold, iconSrc] = await Promise.all([
-    fetchFont(`x${message ?? ''}`, 400),
+  const segments = message ? parseMessage(message) : [];
+  const fontText = `x${stripCustomEmoji(message ?? '')}`;
+  const emojiIds = [...new Set(segments.flatMap((s) => (s.kind === 'emoji' ? [s.id] : [])))];
+
+  const [fontNormal, fontBold, iconSrc, emojiSrcs] = await Promise.all([
+    fetchFont(fontText, 400),
     fetchFont(`${name}￥${price},`, 500),
     fetchIcon(rawIcon),
+    Promise.all(emojiIds.map(async (id) => [id, await fetchCustomEmoji(id)] as const)),
   ]);
+  const emojiMap = new Map(emojiSrcs);
 
   const color = (COLORS.find(([t]) => price >= t) ?? COLORS.at(-1)!)[1];
 
@@ -147,17 +198,37 @@ export async function generateImage({ price, name, iconSrc: rawIcon, message }: 
     )
   );
 
+  const emojiSize = 18 * DPI;
+  const messageChildren: SatoriNode[] = segments.map((seg) => {
+    if (seg.kind === 'text') return seg.value;
+    const src = emojiMap.get(seg.id);
+    if (!src) return `:${seg.name}:`;
+    return h('img', {
+      src,
+      width: emojiSize,
+      height: emojiSize,
+      style: {
+        width: `${emojiSize}px`,
+        height: `${emojiSize}px`,
+        margin: `0 ${2 * DPI}px`,
+      },
+    });
+  });
+
   const messageRow = message
     ? h(
         'div',
         {
           style: {
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
             padding: `${8 * DPI}px ${16 * DPI}px`,
             paddingTop: '0',
             wordBreak: 'break-word',
           },
         },
-        message
+        ...messageChildren
       )
     : null;
 

@@ -19,10 +19,14 @@ function validate(price: number, message?: string): string | null {
     return '金額は100〜50,000円で指定してください';
   }
   const maxLen = LIMITS.find(([t]) => price >= t)?.[1] ?? 0;
-  if (message && [...message].length > maxLen) {
-    return maxLen === 0
-      ? '200円未満のスパチャにはコメントを付けられません'
-      : `コメントは${maxLen}文字以内で指定してください`;
+  if (message) {
+    // カスタム絵文字 <a?:name:id> は表示上 1 文字としてカウント。
+    const normalized = message.replace(/<a?:\w+:\d+>/g, '_');
+    if ([...normalized].length > maxLen) {
+      return maxLen === 0
+        ? '200円未満のスパチャにはコメントを付けられません'
+        : `コメントは${maxLen}文字以内で指定してください`;
+    }
   }
   return null;
 }
