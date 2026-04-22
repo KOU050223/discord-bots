@@ -71,7 +71,7 @@ export function setupSuperchat(client: Client, logger: Logger): void {
       logger.info('superchat: 画像を送信しました', {
         feature: 'superchat',
         action: 'send',
-        user: interaction.user.username,
+        interactionId: interaction.id,
         price,
         hasMessage: Boolean(message),
       });

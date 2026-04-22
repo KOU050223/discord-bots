@@ -45,29 +45,56 @@ function toDataUri(buf: ArrayBuffer, type: string): string {
   return `data:${type};base64,${Buffer.from(buf).toString('base64')}`;
 }
 
+const FETCH_TIMEOUT_MS = 5000;
+
+async function fetchWithTimeout(input: string | URL, init: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function fetchFont(text: string, weight: number): Promise<ArrayBuffer> {
   const url = new URL('https://fonts.googleapis.com/css2');
   url.searchParams.set('family', `Noto Sans JP:wght@${weight}`);
   url.searchParams.set('text', text);
 
-  const css = await fetch(url, { headers: { 'User-Agent': 'satori' } }).then((r) => r.text());
+  const cssRes = await fetchWithTimeout(url, { headers: { 'User-Agent': 'satori' } });
+  if (!cssRes.ok) throw new Error(`fetchFont css fetch failed: ${cssRes.status}`);
+  const css = await cssRes.text();
   const fontUrl = css.match(/src: url\((?<u>https:\/\/[^)]+)\)/u)?.groups?.u;
-  if (!fontUrl) throw new Error('Font URL not found');
-  return fetch(fontUrl).then((r) => r.arrayBuffer());
+  if (!fontUrl) throw new Error('fetchFont: Font URL not found');
+  const fontRes = await fetchWithTimeout(fontUrl);
+  if (!fontRes.ok) throw new Error(`fetchFont font fetch failed: ${fontRes.status}`);
+  return fontRes.arrayBuffer();
 }
 
 async function fetchIcon(src?: string): Promise<string | undefined> {
   if (!src) return undefined;
-  const res = await fetch(src);
-  if (!res.ok) return undefined;
-  return toDataUri(await res.arrayBuffer(), res.headers.get('content-type') ?? 'image/png');
+  try {
+    const res = await fetchWithTimeout(src);
+    if (!res.ok) return undefined;
+    return toDataUri(await res.arrayBuffer(), res.headers.get('content-type') ?? 'image/png');
+  } catch {
+    return undefined;
+  }
 }
 
 async function loadEmoji(segment: string): Promise<string> {
   const str = segment.indexOf('\u200D') === -1 ? segment.replace(/\uFE0F/g, '') : segment;
   const code = [...str].map((c) => c.codePointAt(0)!.toString(16)).join('-');
-  const res = await fetch(`https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${code.toLowerCase()}.svg`);
-  return toDataUri(await res.arrayBuffer(), 'image/svg+xml');
+  try {
+    const res = await fetchWithTimeout(
+      `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${code.toLowerCase()}.svg`
+    );
+    if (!res.ok) return segment;
+    return toDataUri(await res.arrayBuffer(), 'image/svg+xml');
+  } catch {
+    return segment;
+  }
 }
 
 export async function generateImage({ price, name, iconSrc: rawIcon, message }: Props): Promise<Uint8Array> {
